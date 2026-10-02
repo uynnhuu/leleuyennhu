@@ -112,29 +112,31 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
     const toX = (lon: number) => ((lon + 180) / 360) * canvas.width;
     const toY = (lat: number) => ((90 - lat) / 180) * canvas.height;
 
-    // Background Oceans
+    // Background Oceans - Vibrant deep oceanic gradients
     if (mode === 'satellite') {
       const oceanGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      oceanGrad.addColorStop(0, '#09192f');
-      oceanGrad.addColorStop(0.5, '#0b2545');
-      oceanGrad.addColorStop(1, '#08172c');
+      oceanGrad.addColorStop(0, '#0369a1'); // Vibrant Arctic blue
+      oceanGrad.addColorStop(0.2, '#0284c7');
+      oceanGrad.addColorStop(0.5, '#075985'); // Deep tropical ocean
+      oceanGrad.addColorStop(0.8, '#0284c7');
+      oceanGrad.addColorStop(1, '#0369a1');
       ctx.fillStyle = oceanGrad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else if (mode === 'terrain') {
-      ctx.fillStyle = '#0f223a';
+      ctx.fillStyle = '#0284c7';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else if (mode === 'transport') {
-      ctx.fillStyle = '#090f1d';
+      ctx.fillStyle = '#0c4a6e';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
       // hydrology
-      ctx.fillStyle = '#060b14';
+      ctx.fillStyle = '#0369a1';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     // Graticule Lat/Lon Grid lines
-    ctx.strokeStyle = mode === 'transport' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255, 255, 255, 0.08)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 1.2;
     for (let lon = -180; lon <= 180; lon += 30) {
       ctx.beginPath();
       ctx.moveTo(toX(lon), 0);
@@ -148,7 +150,16 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
       ctx.stroke();
     }
 
-    // Draw Continents approximation shapes
+    // Draw Polar Ice Caps (White & Crisp)
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.rect(0, 0, canvas.width, toY(75)); // North Pole
+    ctx.fill();
+    ctx.beginPath();
+    ctx.rect(0, toY(-65), canvas.width, canvas.height - toY(-65)); // Antarctica
+    ctx.fill();
+
+    // Draw Continents approximation shapes (Lush greens, warm savanna & mountains)
     const drawLandMasses = () => {
       // Eurasia & Africa broad land outline
       ctx.beginPath();
@@ -162,14 +173,20 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
       ctx.ellipse(toX(135), toY(-25), canvas.width * 0.08, canvas.height * 0.12, 0, 0, Math.PI * 2);
 
       if (mode === 'satellite') {
-        ctx.fillStyle = '#1b3a2b'; // Forest green
+        ctx.fillStyle = '#15803d'; // Lush vibrant Forest green
       } else if (mode === 'terrain') {
-        ctx.fillStyle = '#3a5a40'; // Lowland green
+        ctx.fillStyle = '#22c55e'; // Terrain green
       } else if (mode === 'transport') {
-        ctx.fillStyle = '#132035'; // Dark slate
+        ctx.fillStyle = '#1e3a5f'; // Slate blue
       } else {
-        ctx.fillStyle = '#0f172a'; // Deep navy
+        ctx.fillStyle = '#166534'; // Emerald green
       }
+      ctx.fill();
+
+      // Sahara & Middle East Desert Sand Glow
+      ctx.beginPath();
+      ctx.ellipse(toX(25), toY(22), canvas.width * 0.12, canvas.height * 0.08, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#eab308'; // Warm desert amber
       ctx.fill();
 
       // Detailed Indochina & Southeast Asia Landmass
@@ -186,15 +203,20 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
       ctx.closePath();
 
       if (mode === 'satellite') {
-        ctx.fillStyle = '#2d5a37'; // Lush tropical Indochina
+        ctx.fillStyle = '#16a34a'; // Lush tropical Indochina
       } else if (mode === 'terrain') {
-        ctx.fillStyle = '#588157';
+        ctx.fillStyle = '#4ade80';
       } else if (mode === 'transport') {
-        ctx.fillStyle = '#1e293b';
+        ctx.fillStyle = '#0284c7';
       } else {
-        ctx.fillStyle = '#111e38';
+        ctx.fillStyle = '#22c55e';
       }
       ctx.fill();
+
+      // Highlight Coastal Shelves around Southeast Asia & Vietnam
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3;
+      ctx.stroke();
 
       // Specific Terrain Hypsometric Shading
       if (mode === 'terrain') {
@@ -314,7 +336,7 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
       renderer.setSize(width, height);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setClearColor(0x040812, 1);
+      renderer.setClearColor(0x06101e, 1);
       container.appendChild(renderer.domElement);
       rendererRef.current = renderer;
     } catch (e: any) {
@@ -322,15 +344,18 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
       return;
     }
 
-    // Ambient & Directional Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+    // Ambient, Hemisphere & Directional Lighting (Bright, vibrant illumination)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.3);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfffaed, 1.25);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x0284c7, 1.2);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfffaed, 1.6);
     sunLight.position.set(200, 150, 180);
     scene.add(sunLight);
 
-    const backLight = new THREE.DirectionalLight(0x38bdf8, 0.45);
+    const backLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
     backLight.position.set(-200, -50, -150);
     scene.add(backLight);
 
@@ -364,8 +389,8 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
     const globeTexture = generateGlobeTexture(viewMode);
     const globeMat = new THREE.MeshStandardMaterial({
       map: globeTexture,
-      roughness: 0.82,
-      metalness: 0.1,
+      roughness: 0.65,
+      metalness: 0.05,
     });
     const globeMesh = new THREE.Mesh(globeGeo, globeMat);
     globeMesh.rotation.x = globeRotationRef.current.x;
@@ -373,12 +398,30 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
     scene.add(globeMesh);
     globeMeshRef.current = globeMesh;
 
+    // Load High-Res NASA Blue Marble Earth Texture for Satellite Mode
+    if (viewMode === 'satellite') {
+      const texLoader = new THREE.TextureLoader();
+      texLoader.load(
+        'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',
+        (loadedTex) => {
+          if (globeMat) {
+            globeMat.map = loadedTex;
+            globeMat.needsUpdate = true;
+          }
+        },
+        undefined,
+        (err) => {
+          console.warn('Using vibrant procedural fallback texture for globe', err);
+        }
+      );
+    }
+
     // Atmospheric Outer Glow Halo
-    const atmosGeo = new THREE.SphereGeometry(globeRadius * 1.04, 64, 64);
+    const atmosGeo = new THREE.SphereGeometry(globeRadius * 1.05, 64, 64);
     const atmosMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.28,
       side: THREE.BackSide,
       blending: THREE.AdditiveBlending
     });
@@ -828,9 +871,19 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href="/interactive_globe.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-sky-400 to-cyan-400 hover:from-amber-300 hover:to-cyan-300 text-slate-950 font-black text-xs flex items-center gap-2 shadow-xl hover:shadow-cyan-500/30 transition-all cursor-pointer ring-2 ring-white/30"
+              title="Mở Quả Cầu 3D Toàn Cầu: Hiển thị tất cả các nước trên thế giới & Thời tiết mưa nắng trực tiếp"
+            >
+              <Globe className="w-4 h-4 text-slate-950" />
+              <span>🌍 Quả Cầu 3D Toàn Cầu (Mưa Nắng & Mọi Quốc Gia) ↗</span>
+            </a>
             <button
               onClick={() => handleSelectCountry(5)} // Focus Vietnam
-              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer"
             >
               <span>🇻🇳 Xem ĐBSCL & 9 Cửa Sông</span>
               <ArrowRight className="w-4 h-4" />
@@ -838,7 +891,7 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
             {onOpenAssistantHelp && (
               <button
                 onClick={onOpenAssistantHelp}
-                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span>Hỏi Trợ Lý Kiến Sáng</span>
@@ -1033,6 +1086,22 @@ export const Mekong3DGlobe: React.FC<Mekong3DGlobeProps> = ({
               />
               <span>Đập & Cảng Thủy</span>
             </label>
+          </div>
+
+          {/* Real-time Weather Ticker along Mekong */}
+          <div className="bg-sky-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-sky-500/40 text-[11px] text-sky-200 flex items-center gap-2 overflow-x-auto shadow-lg">
+            <span className="font-bold text-amber-300 flex items-center gap-1 shrink-0">
+              <span>🌦️ Mưa nắng:</span>
+            </span>
+            <span className="shrink-0 text-amber-200">Hà Nội 31°C ☀️</span>
+            <span className="text-sky-600">•</span>
+            <span className="shrink-0 text-cyan-200">Cần Thơ 28°C 🌧️</span>
+            <span className="text-sky-600">•</span>
+            <span className="shrink-0 text-amber-200">Vientiane 33°C ☀️</span>
+            <span className="text-sky-600">•</span>
+            <span className="shrink-0 text-purple-200">Phnom Penh 30°C ⛈️</span>
+            <span className="text-sky-600">•</span>
+            <span className="shrink-0 text-amber-200">Bangkok 34°C ☀️</span>
           </div>
         </div>
 

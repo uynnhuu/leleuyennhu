@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quả Cầu Thế Giới 3D Vệ Tinh // Hiển Thị Tất Cả Quốc Gia & Thời Tiết Mưa Nắng Thời Gian Thực</title>
+  
+  <!-- Google Fonts: Inter & Rajdhani -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Globe.gl via CDN -->
+  <script src="https://unpkg.com/globe.gl@2.46.2/dist/globe.gl.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #020617;
+      --panel-bg: rgba(11, 19, 38, 0.82);
+      --panel-border: rgba(56, 189, 248, 0.35);
+      --panel-glow: rgba(56, 189, 248, 0.15);
+      --neon-cyan: #00f0ff;
+      --neon-amber: #f59e0b;
+      --neon-emerald: #10b981;
+      --neon-rose: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-cyber: 'Rajdhani', sans-serif;
+      --font-ui: 'Inter', system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      font-family: var(--font-ui);
+      color: var(--text-main);
+    }
+
+    /* 3D Canvas Container */
+    #globe-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      cursor: grab;
+    }
+    #globe-container:active {
+      cursor: grabbing;
+    }
+
+    /* Subtle Cosmic Starfield Atmosphere */
+    .space-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+      background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(2, 6, 23, 0.75) 98%);
+    }
+
+    /* ==========================================================================
+       TOP NAVIGATION BAR
+       ========================================================================== */
+    .hud-header {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      right: 18px;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .brand-box {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 9px 18px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px var(--panel-glow);
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #38bdf8, #0284c7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+      font-size: 20px;
+    }
+
+    .brand-title {
+      font-family: var(--font-cyber);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand-subtitle {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 500;
+      color: #38bdf8;
+      letter-spacing: 0.5px;
+    }
+
+    .top-actions {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cyber-btn {
+      appearance: none;
+      border: 1px solid var(--panel-border);
+      background: var(--panel-bg);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-family: var(--font-cyber);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    .cyber-btn:hover {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.2);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .cyber-btn.active {
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.4), rgba(56, 189, 248, 0.3));
+      border-color: #38bdf8;
+      color: #fff;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.45);
+    }
+
+    /* ==========================================================================
+       WEATHER FILTER TOOLBAR (CENTER TOP)
+       ========================================================================== */
+    .weather-toolbar {
+      position: absolute;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 30px;
+      padding: 5px 8px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+    }
+
+    .weather-pill {
+      border: none;
+      background: transparent;
+      color: #cbd5e1;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .weather-pill:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .weather-pill.active {
+      background: #0284c7;
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 0 12px rgba(2, 132, 199, 0.6);
+    }
+
+    /* ==========================================================================
+       LEFT SIDEBAR (SEARCH, WEATHER CONTROLS & TELEMETRY)
+       ========================================================================== */
+    .hud-sidebar {
+      position: absolute;
+      top: 76px;
+      left: 18px;
+      width: 320px;
+      max-height: calc(100vh - 100px);
+      z-index: 20;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 16px;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 0 14px var(--panel-glow);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #38bdf8 transparent;
+    }
+
+    .hud-sidebar::-webkit-scrollbar { width: 4px; }
+    .hud-sidebar::-webkit-scrollbar-thumb {
+      background: #38bdf8;
+      border-radius: 4px;
+    }
+
+    .section-title {
+      font-family: var(--font-cyber);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.4), transparent);
+    }
+
+    /* Search & Autocomplete */
+    .search-wrapper { position: relative; }
+    .search-input-box {
+      display: flex;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 10px;
+      padding: 4px 6px 4px 12px;
+      transition: all 0.25s ease;
+    }
+    .search-input-box:focus-within {
+      border-color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+    .search-input-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      width: 100%;
+    }
+    .search-input-box input::placeholder { color: #64748b; }
+    .search-btn {
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      outline: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-family: var(--font-cyber);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .search-btn:hover { background: #0369a1; }
+
+    .autocomplete-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0; right: 0;
+      background: rgba(11, 19, 38, 0.96);
+      border: 1px solid #38bdf8;
+      border-radius: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(16px);
+    }
+    .autocomplete-item {
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.2s;
+    }
+    .autocomplete-item:hover {
+      background: rgba(56, 189, 248, 0.2);
+      color: #fff;
+    }
+
+    /* Layer Toggles */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .25s;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .25s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #0284c7;
+      box-shadow: 0 0 10px #0284c7;
+    }
+    input:checked + .slider:before {
+      transform: translateX(18px);
+      background-color: #fff;
+    }
+
+    /* Telemetry HUD */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 10px;
+      font-family: var(--font-cyber);
+    }
+    .telemetry-item { display: flex; flex-direction: column; }
+    .telemetry-label {
+      color: #64748b;
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .telemetry-val {
+      color: #38bdf8;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    /* ==========================================================================
+       3D HTML WEATHER BADGES FLOATING ON GLOBE
+       ========================================================================== */
+    .weather-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(11, 19, 38, 0.88);
+      border: 1.5px solid #38bdf8;
+      border-radius: 20px;
+      padding: 3px 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(56, 189, 248, 0.4);
+      cursor: pointer;
+      white-space: nowrap;
+      pointer-events: auto;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .weather-badge:hover {
+      transform: scale(1.15) translateY(-2px);
+      background: rgba(2, 132, 199, 0.95);
+      border-color: #fff;
+      box-shadow: 0 0 20px #38bdf8;
+      z-index: 100;
+    }
+
+    .weather-badge.sunny {
+      border-color: #f59e0b;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+    }
+    .weather-badge.rain {
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+    }
+    .weather-badge.storm {
+      border-color: #c084fc;
+      box-shadow: 0 0 14px rgba(192, 132, 252, 0.6);
+      animation: stormFlash 2s infinite alternate;
+    }
+    .weather-badge.snow {
+      border-color: #e0f2fe;
+      box-shadow: 0 0 12px rgba(224, 242, 254, 0.7);
+    }
+
+    @keyframes stormFlash {
+      0%, 100% { border-color: #c084fc; }
+      50% { border-color: #fff; box-shadow: 0 0 20px #fff; }
+    }
+
+    .wb-icon { font-size: 14px; }
+    .wb-temp {
+      font-family: var(--font-cyber);
+      font-weight: 700;
+      font-size: 13px;
+      color: #fff;
+    }
+    .wb-city {
+      font-size: 11px;
+      font-weight: 500;
+      color: #cbd5e1;
+    }
+
+    /* ==========================================================================
+       RIGHT COUNTRY & LIVE WEATHER INFO PANEL
+       ========================================================================== */
+    .country-panel {
+      position: absolute;
+      top: 76px;
+      right: 18px;
+      width: 340px;
+      z-index: 25;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 20px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 18px var(--panel-glow);
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(35px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+      padding-bottom: 10px;
+    }
+
+    .country-flag-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .country-flag-img {
+      width: 46px;
+      height: 30px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .country-title {
+      font-family: var(--font-cyber);
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+    }
+    .country-subtitle {
+      font-size: 11px;
+      color: #38bdf8;
+    }
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .close-btn:hover { color: #fff; }
+
+    /* Live Weather Card inside Detail Panel */
+    .weather-live-box {
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(15, 23, 42, 0.6));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .wlb-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .wlb-icon { font-size: 32px; }
+    .wlb-temp {
+      font-family: var(--font-cyber);
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+    .wlb-status {
+      font-size: 12px;
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    .wlb-details {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    .stat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .stat-name {
+      font-size: 12px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stat-value {
+      font-family: var(--font-cyber);
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .flyto-btn {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-family: var(--font-cyber);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .flyto-btn:hover {
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.7);
+      transform: translateY(-1px);
+    }
+
+    /* Hover Tooltip */
+    .globe-tooltip {
+      position: absolute;
+      pointer-events: none;
+      z-index: 50;
+      background: rgba(11, 19, 38, 0.92);
+      border: 1px solid #38bdf8;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), 0 0 15px rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      padding: 8px 14px;
+      backdrop-filter: blur(12px);
+      color: #fff;
+      font-size: 12px;
+      display: none;
+      transform: translate(-50%, -120%);
+      white-space: nowrap;
+    }
+    .tooltip-name {
+      font-family: var(--font-cyber);
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tooltip-sub { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+
+    /* Footer hints */
+    .hud-footer {
+      position: absolute;
+      bottom: 14px;
+      left: 18px;
+      right: 18px;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+    .control-hints {
+      pointer-events: auto;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 7px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 11px;
+      color: #94a3b8;
+      backdrop-filter: blur(12px);
+    }
+    .hint-key {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: var(--font-cyber);
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    /* Loading Screen */
+    #loading-overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: #020617;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.5s ease;
+    }
+    .spinner-ring {
+      width: 55px; height: 55px;
+      border: 3px solid rgba(56, 189, 248, 0.2);
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-family: var(--font-cyber);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: #38bdf8;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 768px) {
+      .hud-sidebar { width: calc(100vw - 36px); max-height: 220px; }
+      .country-panel { width: calc(100vw - 36px); top: auto; bottom: 70px; right: 18px; }
+      .weather-toolbar { display: none; }
+      .control-hints { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading-overlay">
+    <div class="spinner-ring"></div>
+    <div class="loading-text" id="loading-msg">Đang Tải Ảnh Vệ Tinh Trái Đất & Dữ Liệu Thời Tiết Toàn Cầu...</div>
+  </div>
+
+  <div class="space-overlay"></div>
+
+  <!-- 3D Globe Container -->
+  <div id="globe-container"></div>
+
+  <!-- Tooltip -->
+  <div class="globe-tooltip" id="globe-tooltip">
+    <div class="tooltip-name" id="tt-name">--</div>
+    <div class="tooltip-sub" id="tt-sub">--</div>
+  </div>
+
+  <!-- Top Header Navigation -->
+  <header class="hud-header">
+    <div class="brand-box">
+      <div class="brand-icon">🌍</div>
+      <div class="brand-title">
+        <span>TERRA-EARTH 3D // VỆ TINH TOÀN CẦU</span>
+        <span class="brand-subtitle">Hiển Thị Tất Cả Quốc Gia & Mưa Nắng Thời Gian Thực</span>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button class="cyber-btn" id="btn-audio" title="Bật/Tắt hiệu ứng âm thanh">
+        <span id="audio-icon">🔊</span>
+        <span id="audio-text">Âm Thanh</span>
+      </button>
+
+      <button class="cyber-btn active" id="btn-weather-layer" title="Bật/Tắt hiển thị thời tiết trên quả cầu">
+        <span>⛅</span>
+        <span>Lớp Thời Tiết</span>
+      </button>
+
+      <button class="cyber-btn" id="btn-daynight" title="Chuyển đổi Ban Ngày (Vệ tinh thật) / Ban Đêm">
+        <span id="daynight-icon">☀️</span>
+        <span id="daynight-text">Ban Ngày (Vệ Tinh)</span>
+      </button>
+
+      <button class="cyber-btn active" id="btn-rotate" title="Bật/Tắt tự động xoay quả cầu">
+        <span id="rotate-icon">🔄</span>
+        <span id="rotate-text">Tự Xoay</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Weather Quick Filter Toolbar -->
+  <div class="weather-toolbar" id="weather-toolbar">
+    <button class="weather-pill active" data-filter="all">🌐 Toàn Cầu (<span id="count-all">0</span>)</button>
+    <button class="weather-pill" data-filter="sun">☀️ Nắng Đẹp (<span id="count-sun">0</span>)</button>
+    <button class="weather-pill" data-filter="rain">🌧️ Đang Mưa (<span id="count-rain">0</span>)</button>
+    <button class="weather-pill" data-filter="storm">⛈️ Dông Bão (<span id="count-storm">0</span>)</button>
+    <button class="weather-pill" data-filter="snow">❄️ Băng Tuyết (<span id="count-snow">0</span>)</button>
+  </div>
+
+  <!-- Left Sidebar Controls -->
+  <aside class="hud-sidebar" id="hud-sidebar">
+    <!-- Search & Fly-To -->
+    <div>
+      <div class="section-title"><span>🔍</span> Tìm Kiếm Quốc Gia / Thành Phố</div>
+      <div class="search-wrapper">
+        <div class="search-input-box">
+          <input type="text" id="search-input" placeholder="Nhập tên nước (Việt Nam, Pháp, Nhật, Mỹ...)" autocomplete="off">
+          <button class="search-btn" id="btn-search">Bay Tới</button>
+        </div>
+        <div class="autocomplete-list" id="autocomplete-list"></div>
+      </div>
+    </div>
+
+    <!-- Visual Toggles -->
+    <div>
+      <div class="section-title"><span>⚙️</span> Lớp Bản Đồ & Hiển Thị</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="toggle-row">
+          <span>🏷️ Nhãn tên các nước trên thế giới</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-country-labels" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>🌦️ Huy hiệu thời tiết (Nhiệt độ & Icon)</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-weather-badges" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>🌀 Vòng sóng radar mưa & dông bão</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-radar-rings" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>✨ Khí quyển phát quang xanh ngọc</span>
+          <label class="switch">
+            <input type="checkbox" id="toggle-atmosphere" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Coordinates -->
+    <div>
+      <div class="section-title"><span>📡</span> Tọa Độ Điểm Nhìn Camera</div>
+      <div class="telemetry-grid">
+        <div class="telemetry-item">
+          <span class="telemetry-label">Vĩ Độ (Lat)</span>
+          <span class="telemetry-val" id="tele-lat">16.0° N</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Kinh Độ (Lng)</span>
+          <span class="telemetry-val" id="tele-lng">108.0° E</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Độ Cao Zoom</span>
+          <span class="telemetry-val" id="tele-alt">2.2x R</span>
+        </div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Trạng Thái Xoay</span>
+          <span class="telemetry-val" id="tele-rot">0.8 deg/s</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Detail & Live Weather Panel -->
+  <div class="country-panel" id="country-panel">
+    <div class="panel-header">
+      <div class="country-flag-badge">
+        <img src="" alt="Flag" class="country-flag-img" id="panel-flag">
+        <div>
+          <div class="country-title" id="panel-name">VIỆT NAM</div>
+          <div class="country-subtitle" id="panel-formal">Cộng hòa Xã hội Chủ nghĩa Việt Nam</div>
+        </div>
+      </div>
+      <button class="close-btn" id="panel-close" title="Đóng bảng">✕</button>
+    </div>
+
+    <!-- Live Weather Card -->
+    <div class="weather-live-box">
+      <div class="wlb-main">
+        <span class="wlb-icon" id="pw-icon">☀️</span>
+        <div>
+          <div class="wlb-temp" id="pw-temp">32°C</div>
+          <div class="wlb-status" id="pw-status">Trời Nắng Đẹp</div>
+        </div>
+      </div>
+      <div class="wlb-details">
+        <div>💧 Độ ẩm: <strong id="pw-humidity">76%</strong></div>
+        <div>💨 Gió: <strong id="pw-wind">14 km/h</strong></div>
+        <div>📍 Khí hậu: <strong id="pw-zone">Nhiệt đới</strong></div>
+      </div>
+    </div>
+
+    <!-- Country Geo & Demographic Details -->
+    <div class="stat-list">
+      <div class="stat-row">
+        <span class="stat-name">🏛️ Thủ đô:</span>
+        <span class="stat-value" id="panel-capital">Hà Nội</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-name">👥 Dân số:</span>
+        <span class="stat-value" id="panel-pop">98,510,000</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-name">🌍 Châu lục:</span>
+        <span class="stat-value" id="panel-continent">Châu Á</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-name">💰 Quy mô GDP:</span>
+        <span class="stat-value" id="panel-gdp">$408 Tỷ USD</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-name">🏷️ Mã ISO:</span>
+        <span class="stat-value" id="panel-iso">VN / VNM</span>
+      </div>
+    </div>
+
+    <button class="flyto-btn" id="panel-fly-btn">
+      <span>🚀</span> Bay Thẳng Tới Tâm Điểm Quốc Gia
+    </button>
+  </div>
+
+  <!-- Bottom Navigation Hints -->
+  <footer class="hud-footer">
+    <div class="control-hints">
+      <div><span class="hint-key">Kéo Chuột</span> <span>Xoay Quả Cầu</span></div>
+      <div><span class="hint-key">Cuộn Chuột</span> <span>Phóng To / Thu Nhỏ</span></div>
+      <div><span class="hint-key">Click Quốc Gia</span> <span>Xem Thời Tiết & Thông Tin</span></div>
+    </div>
+  </footer>
+
+  <script>
+    // =========================================================================
+    // 1. SOUND FX ENGINE (Web Audio API)
+    // =========================================================================
+    class SoundEngine {
+      constructor() { this.ctx = null; this.isMuted = false; }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      }
+      toggleMute() { this.isMuted = !this.isMuted; return !this.isMuted; }
+      playClickSound() {
+        if (this.isMuted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.exponentialRampToValueAtTime(1174.66, now + 0.15);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
+      playFlyToSound() {
+        if (this.isMuted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(240, now);
+        osc.frequency.exponentialRampToValueAtTime(960, now + 0.35);
+        gain.gain.setValueAtTime(0.02, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.7);
+      }
+    }
+    const sound = new SoundEngine();
+
+    // =========================================================================
+    // 2. WORLD WEATHER STATIONS (Mạng lưới quan trắc thời tiết toàn cầu)
+    // =========================================================================
+    const WEATHER_STATIONS = [
+      // Đông Nam Á & Việt Nam
+      { id: 'HAN', name: 'Hà Nội', country: 'Việt Nam', iso: 'VNM', lat: 21.0285, lng: 105.8542, temp: 31, type: 'sun', status: 'Nắng rực rỡ', icon: '☀️', humidity: 72, wind: 12 },
+      { id: 'SGN', name: 'TP. Hồ Chí Minh', country: 'Việt Nam', iso: 'VNM', lat: 10.8231, lng: 106.6297, temp: 28, type: 'rain', status: 'Mưa rào nhiệt đới', icon: '🌧️', humidity: 86, wind: 18 },
+      { id: 'DAD', name: 'Đà Nẵng', country: 'Việt Nam', iso: 'VNM', lat: 16.0544, lng: 108.2022, temp: 32, type: 'sun', status: 'Nắng ấm ven biển', icon: '☀️', humidity: 75, wind: 15 },
+      { id: 'VTE', name: 'Vientiane', country: 'Lào', iso: 'LAO', lat: 17.9757, lng: 102.6331, temp: 33, type: 'sun', status: 'Nắng gắt', icon: '☀️', humidity: 65, wind: 10 },
+      { id: 'PNH', name: 'Phnom Penh', country: 'Campuchia', iso: 'KHM', lat: 11.5564, lng: 104.9282, temp: 30, type: 'rain', status: 'Mưa dông Biển Hồ', icon: '⛈️', humidity: 88, wind: 22 },
+      { id: 'BKK', name: 'Bangkok', country: 'Thái Lan', iso: 'THA', lat: 13.7563, lng: 100.5018, temp: 34, type: 'sun', status: 'Nắng nóng', icon: '☀️', humidity: 68, wind: 14 },
+      { id: 'SIN', name: 'Singapore', country: 'Singapore', iso: 'SGP', lat: 1.3521, lng: 103.8198, temp: 27, type: 'rain', status: 'Mưa rào xích đạo', icon: '🌧️', humidity: 90, wind: 16 },
+      { id: 'KUL', name: 'Kuala Lumpur', country: 'Malaysia', iso: 'MYS', lat: 3.1390, lng: 101.6869, temp: 29, type: 'rain', status: 'Mưa chiều', icon: '🌧️', humidity: 85, wind: 11 },
+      { id: 'JKT', name: 'Jakarta', country: 'Indonesia', iso: 'IDN', lat: -6.2088, lng: 106.8456, temp: 31, type: 'sun', status: 'Nắng nhẹ ven biển', icon: '☀️', humidity: 74, wind: 13 },
+      { id: 'MNL', name: 'Manila', country: 'Philippines', iso: 'PHL', lat: 14.5995, lng: 120.9842, temp: 26, type: 'storm', status: 'Bão nhiệt đới', icon: '⛈️', humidity: 94, wind: 48 },
+
+      // Đông Á
+      { id: 'TYO', name: 'Tokyo', country: 'Nhật Bản', iso: 'JPN', lat: 35.6762, lng: 139.6503, temp: 22, type: 'sun', status: 'Trời quang đãng', icon: '☀️', humidity: 55, wind: 14 },
+      { id: 'OSA', name: 'Osaka', country: 'Nhật Bản', iso: 'JPN', lat: 34.6937, lng: 135.5023, temp: 23, type: 'sun', status: 'Nắng dịu', icon: '☀️', humidity: 58, wind: 12 },
+      { id: 'SEL', name: 'Seoul', country: 'Hàn Quốc', iso: 'KOR', lat: 37.5665, lng: 126.9780, temp: 19, type: 'sun', status: 'Thu mát mẻ', icon: '🌤️', humidity: 52, wind: 15 },
+      { id: 'BJS', name: 'Bắc Kinh', country: 'Trung Quốc', iso: 'CHN', lat: 39.9042, lng: 116.4074, temp: 18, type: 'sun', status: 'Trời hanh khô', icon: '☀️', humidity: 38, wind: 16 },
+      { id: 'SHA', name: 'Thượng Hải', country: 'Trung Quốc', iso: 'CHN', lat: 31.2304, lng: 121.4737, temp: 24, type: 'rain', status: 'Mưa phùn rải rác', icon: '🌦️', humidity: 80, wind: 20 },
+      { id: 'HKG', name: 'Hồng Kông', country: 'Hồng Kông', iso: 'HKG', lat: 22.3193, lng: 114.1694, temp: 29, type: 'sun', status: 'Nắng gió biển', icon: '☀️', humidity: 75, wind: 22 },
+
+      // Nam Á & Trung Đông
+      { id: 'DEL', name: 'New Delhi', country: 'Ấn Độ', iso: 'IND', lat: 28.6139, lng: 77.2090, temp: 35, type: 'sun', status: 'Nắng chói chang', icon: '☀️', humidity: 45, wind: 12 },
+      { id: 'BOM', name: 'Mumbai', country: 'Ấn Độ', iso: 'IND', lat: 19.0760, lng: 72.8777, temp: 28, type: 'storm', status: 'Gió mùa & Mưa to', icon: '⛈️', humidity: 92, wind: 36 },
+      { id: 'DXB', name: 'Dubai', country: 'UAE', iso: 'ARE', lat: 25.2048, lng: 55.2708, temp: 39, type: 'sun', status: 'Nắng sa mạc gay gắt', icon: '☀️', humidity: 30, wind: 18 },
+      { id: 'CAI', name: 'Cairo', country: 'Ai Cập', iso: 'EGY', lat: 30.0444, lng: 31.2357, temp: 33, type: 'sun', status: 'Khô ráo nắng vàng', icon: '☀️', humidity: 35, wind: 15 },
+      { id: 'RUH', name: 'Riyadh', country: 'Ả Rập Xê Út', iso: 'SAU', lat: 24.7136, lng: 46.6753, temp: 40, type: 'sun', status: 'Nắng sa mạc', icon: '☀️', humidity: 18, wind: 20 },
+
+      // Châu Âu
+      { id: 'LON', name: 'London', country: 'Vương quốc Anh', iso: 'GBR', lat: 51.5074, lng: -0.1278, temp: 15, type: 'rain', status: 'Mưa phùn sương mù', icon: '🌧️', humidity: 88, wind: 25 },
+      { id: 'PAR', name: 'Paris', country: 'Pháp', iso: 'FRA', lat: 48.8566, lng: 2.3522, temp: 17, type: 'rain', status: 'Mưa thu nhẹ', icon: '🌧️', humidity: 82, wind: 18 },
+      { id: 'BER', name: 'Berlin', country: 'Đức', iso: 'DEU', lat: 52.5200, lng: 13.4050, temp: 14, type: 'rain', status: 'Nhiều mây ẩm ướt', icon: '🌧️', humidity: 79, wind: 21 },
+      { id: 'ROM', name: 'Rome', country: 'Ý', iso: 'ITA', lat: 41.9028, lng: 12.4964, temp: 26, type: 'sun', status: 'Nắng Địa Trung Hải', icon: '☀️', humidity: 55, wind: 12 },
+      { id: 'MAD', name: 'Madrid', country: 'Tây Ban Nha', iso: 'ESP', lat: 40.4168, lng: -3.7038, temp: 28, type: 'sun', status: 'Nắng ấm', icon: '☀️', humidity: 42, wind: 14 },
+      { id: 'MOW', name: 'Moscow', country: 'Nga', iso: 'RUS', lat: 55.7558, lng: 37.6173, temp: 6, type: 'snow', status: 'Lạnh giá có tuyết sớm', icon: '❄️', humidity: 85, wind: 22 },
+      { id: 'OSL', name: 'Oslo', country: 'Na Uy', iso: 'NOR', lat: 59.9139, lng: 10.7522, temp: 4, type: 'snow', status: 'Tuyết rơi Bắc Âu', icon: '❄️', humidity: 89, wind: 24 },
+
+      // Bắc Mỹ
+      { id: 'NYC', name: 'New York', country: 'Hoa Kỳ', iso: 'USA', lat: 40.7128, lng: -74.0060, temp: 21, type: 'sun', status: 'Trời nắng thu', icon: '☀️', humidity: 60, wind: 19 },
+      { id: 'WAS', name: 'Washington D.C.', country: 'Hoa Kỳ', iso: 'USA', lat: 38.9072, lng: -77.0369, temp: 23, type: 'sun', status: 'Nắng đẹp', icon: '☀️', humidity: 58, wind: 16 },
+      { id: 'LAX', name: 'Los Angeles', country: 'Hoa Kỳ', iso: 'USA', lat: 34.0522, lng: -118.2437, temp: 29, type: 'sun', status: 'Nắng ấm California', icon: '☀️', humidity: 48, wind: 12 },
+      { id: 'MIA', name: 'Miami', country: 'Hoa Kỳ', iso: 'USA', lat: 25.7617, lng: -80.1918, temp: 31, type: 'storm', status: 'Dông lốc nhiệt đới', icon: '⛈️', humidity: 90, wind: 38 },
+      { id: 'YTO', name: 'Toronto', country: 'Canada', iso: 'CAN', lat: 43.6532, lng: -79.3832, temp: 13, type: 'rain', status: 'Mưa lạnh', icon: '🌧️', humidity: 82, wind: 28 },
+      { id: 'YVR', name: 'Vancouver', country: 'Canada', iso: 'CAN', lat: 49.2827, lng: -123.1207, temp: 11, type: 'rain', status: 'Mưa dai dẳng', icon: '🌧️', humidity: 91, wind: 20 },
+      { id: 'MEX', name: 'Mexico City', country: 'Mexico', iso: 'MEX', lat: 19.4326, lng: -99.1332, temp: 24, type: 'rain', status: 'Mưa rào cao nguyên', icon: '🌦️', humidity: 65, wind: 14 },
+
+      // Nam Mỹ
+      { id: 'SAO', name: 'São Paulo', country: 'Brazil', iso: 'BRA', lat: -23.5505, lng: -46.6333, temp: 27, type: 'rain', status: 'Mưa dông Amazon', icon: '🌧️', humidity: 84, wind: 20 },
+      { id: 'RIO', name: 'Rio de Janeiro', country: 'Brazil', iso: 'BRA', lat: -22.9068, lng: -43.1729, temp: 32, type: 'sun', status: 'Nắng biển nhiệt đới', icon: '☀️', humidity: 70, wind: 16 },
+      { id: 'BUE', name: 'Buenos Aires', country: 'Argentina', iso: 'ARG', lat: -34.6037, lng: -58.3816, temp: 20, type: 'sun', status: 'Gió mùa xuân', icon: '🌤️', humidity: 62, wind: 25 },
+      { id: 'BOG', name: 'Bogota', country: 'Colombia', iso: 'COL', lat: 4.7110, lng: -74.0721, temp: 16, type: 'rain', status: 'Mưa lạnh Andes', icon: '🌧️', humidity: 85, wind: 12 },
+
+      // Châu Phi & Úc
+      { id: 'CPT', name: 'Cape Town', country: 'Nam Phi', iso: 'ZAF', lat: -33.9249, lng: 18.4241, temp: 22, type: 'sun', status: 'Nắng lộng gió', icon: '☀️', humidity: 58, wind: 32 },
+      { id: 'NBO', name: 'Nairobi', country: 'Kenya', iso: 'KEN', lat: -1.2921, lng: 36.8219, temp: 25, type: 'sun', status: 'Nắng xavan thảo nguyên', icon: '☀️', humidity: 55, wind: 16 },
+      { id: 'SYD', name: 'Sydney', country: 'Úc', iso: 'AUS', lat: -33.8688, lng: 151.2093, temp: 24, type: 'sun', status: 'Nắng xuân ấm áp', icon: '☀️', humidity: 60, wind: 20 },
+      { id: 'MEL', name: 'Melbourne', country: 'Úc', iso: 'AUS', lat: -37.8136, lng: 144.9631, temp: 17, type: 'rain', status: 'Gió lạnh biển Nam', icon: '🌧️', humidity: 76, wind: 34 },
+      { id: 'AKL', name: 'Auckland', country: 'New Zealand', iso: 'NZL', lat: -36.8485, lng: 174.7633, temp: 16, type: 'rain', status: 'Mưa rào hải đảo', icon: '🌦️', humidity: 80, wind: 28 }
+    ];
+
+    // =========================================================================
+    // 3. ASYNC LIVE WEATHER SYNC (OPEN-METEO API)
+    // =========================================================================
+    async function syncRealWeather() {
+      // Pick first 8 priority cities to update live via Open-Meteo
+      const priorityStations = WEATHER_STATIONS.slice(0, 10);
+      for (const st of priorityStations) {
+        try {
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${st.lat.toFixed(4)}&longitude=${st.lng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.current) {
+              const c = data.current;
+              st.temp = Math.round(c.temperature_2m);
+              st.humidity = Math.round(c.relative_humidity_2m);
+              st.wind = Math.round(c.wind_speed_10m);
+              const code = c.weather_code;
+              // Map WMO codes
+              if (code === 0) { st.type = 'sun'; st.icon = '☀️'; st.status = 'Trời Nắng Rực Rỡ'; }
+              else if (code <= 3) { st.type = 'sun'; st.icon = '🌤️'; st.status = 'Nắng Mây Đan Xen'; }
+              else if (code >= 51 && code <= 67) { st.type = 'rain'; st.icon = '🌧️'; st.status = 'Đang Có Mưa'; }
+              else if (code >= 71 && code <= 77) { st.type = 'snow'; st.icon = '❄️'; st.status = 'Đang Rơi Tuyết'; }
+              else if (code >= 95) { st.type = 'storm'; st.icon = '⛈️'; st.status = 'Dông Sét Bão'; }
+            }
+          }
+        } catch (e) {
+          // Keep realistic fallback data
+        }
+      }
+      updateCounts();
+      renderWeatherBadges();
+      updateRadarRings();
+    }
+
+    // =========================================================================
+    // 4. COUNTRY LOOKUP & EXTRAS DATABASE
+    // =========================================================================
+    const COUNTRY_EXTRAS = {
+      'VNM': { capital: 'Hà Nội', viName: 'Việt Nam', formal: 'Cộng hòa Xã hội Chủ nghĩa Việt Nam', flag: '🇻🇳', lat: 14.0583, lng: 108.2772 },
+      'USA': { capital: 'Washington, D.C.', viName: 'Hoa Kỳ (Mỹ)', formal: 'United States of America', flag: '🇺🇸', lat: 37.0902, lng: -95.7129 },
+      'FRA': { capital: 'Paris', viName: 'Pháp', formal: 'République française', flag: '🇫🇷', lat: 46.2276, lng: 2.2137 },
+      'JPN': { capital: 'Tokyo', viName: 'Nhật Bản', formal: 'Japan', flag: '🇯🇵', lat: 36.2048, lng: 138.2529 },
+      'CHN': { capital: 'Bắc Kinh', viName: 'Trung Quốc', formal: "People's Republic of China", flag: '🇨🇳', lat: 35.8617, lng: 104.1954 },
+      'RUS': { capital: 'Moskva', viName: 'Nga', formal: 'Russian Federation', flag: '🇷🇺', lat: 61.5240, lng: 105.3188 },
+      'GBR': { capital: 'London', viName: 'Vương quốc Anh', formal: 'United Kingdom', flag: '🇬🇧', lat: 55.3781, lng: -3.4360 },
+      'DEU': { capital: 'Berlin', viName: 'Đức', formal: 'Bundesrepublik Deutschland', flag: '🇩🇪', lat: 51.1657, lng: 10.4515 },
+      'IND': { capital: 'New Delhi', viName: 'Ấn Độ', formal: 'Republic of India', flag: '🇮🇳', lat: 20.5937, lng: 78.9629 },
+      'KOR': { capital: 'Seoul', viName: 'Hàn Quốc', formal: 'Republic of Korea', flag: '🇰🇷', lat: 35.9078, lng: 127.7669 },
+      'AUS': { capital: 'Canberra', viName: 'Úc (Australia)', formal: 'Commonwealth of Australia', flag: '🇦🇺', lat: -25.2744, lng: 133.7751 },
+      'CAN': { capital: 'Ottawa', viName: 'Canada', formal: 'Canada', flag: '🇨🇦', lat: 56.1304, lng: -106.3468 },
+      'BRA': { capital: 'Brasília', viName: 'Brazil', formal: 'República Federativa do Brasil', flag: '🇧🇷', lat: -14.2350, lng: -51.9253 },
+      'SGP': { capital: 'Singapore', viName: 'Singapore', formal: 'Republic of Singapore', flag: '🇸🇬', lat: 1.3521, lng: 103.8198 },
+      'THA': { capital: 'Bangkok', viName: 'Thái Lan', formal: 'Kingdom of Thailand', flag: '🇹🇭', lat: 15.8700, lng: 100.9925 },
+      'LAO': { capital: 'Vientiane', viName: 'Lào', formal: "Lao People's Democratic Republic", flag: '🇱🇦', lat: 19.8563, lng: 102.4955 },
+      'KHM': { capital: 'Phnom Penh', viName: 'Campuchia', formal: 'Kingdom of Cambodia', flag: '🇰🇭', lat: 12.5657, lng: 104.9910 },
+      'IDN': { capital: 'Jakarta', viName: 'Indonesia', formal: 'Republic of Indonesia', flag: '🇮🇩', lat: -0.7893, lng: 113.9213 },
+      'MYS': { capital: 'Kuala Lumpur', viName: 'Malaysia', formal: 'Malaysia', flag: '🇲🇾', lat: 4.2105, lng: 101.9758 },
+      'PHL': { capital: 'Manila', viName: 'Philippines', formal: 'Republic of the Philippines', flag: '🇵🇭', lat: 12.8797, lng: 121.7740 },
+      'EGY': { capital: 'Cairo', viName: 'Ai Cập', formal: 'Arab Republic of Egypt', flag: '🇪🇬', lat: 26.8206, lng: 30.8025 }
+    };
+
+    function getFlagEmoji(countryCode) {
+      if (!countryCode || countryCode === '-99' || countryCode.length !== 2) return '🌐';
+      const codePoints = countryCode.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0));
+      return String.fromCodePoint(...codePoints);
+    }
+
+    // =========================================================================
+    // 5. APPLICATION STATE
+    // =========================================================================
+    const state = {
+      isNightMode: false,
+      autoRotate: true,
+      weatherFilter: 'all',
+      showWeatherBadges: true,
+      showRadarRings: true,
+      showCountryLabels: true,
+      hoveredCountry: null,
+      selectedCountry: null,
+      countriesData: null,
+      countryLabelsList: []
+    };
+
+    // Photorealistic Earth Textures (NASA Blue Marble)
+    const TEXTURES = {
+      day: 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',
+      topology: 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png',
+      night: 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg',
+      space: 'https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png'
+    };
+
+    // DOM Elements
+    const container = document.getElementById('globe-container');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const tooltip = document.getElementById('globe-tooltip');
+    const ttName = document.getElementById('tt-name');
+    const ttSub = document.getElementById('tt-sub');
+    const countryPanel = document.getElementById('country-panel');
+    const panelFlag = document.getElementById('panel-flag');
+    const panelName = document.getElementById('panel-name');
+    const panelFormal = document.getElementById('panel-formal');
+    const panelCapital = document.getElementById('panel-capital');
+    const panelPop = document.getElementById('panel-pop');
+    const panelContinent = document.getElementById('panel-continent');
+    const panelGdp = document.getElementById('panel-gdp');
+    const panelIso = document.getElementById('panel-iso');
+    const panelClose = document.getElementById('panel-close');
+    const panelFlyBtn = document.getElementById('panel-fly-btn');
+    const pwIcon = document.getElementById('pw-icon');
+    const pwTemp = document.getElementById('pw-temp');
+    const pwStatus = document.getElementById('pw-status');
+    const pwHumidity = document.getElementById('pw-humidity');
+    const pwWind = document.getElementById('pw-wind');
+    const pwZone = document.getElementById('pw-zone');
+    const searchInput = document.getElementById('search-input');
+    const btnSearch = document.getElementById('btn-search');
+    const autocompleteList = document.getElementById('autocomplete-list');
+    const teleLat = document.getElementById('tele-lat');
+    const teleLng = document.getElementById('tele-lng');
+    const teleAlt = document.getElementById('tele-alt');
+    const teleRot = document.getElementById('tele-rot');
+
+    // =========================================================================
+    // 6. INITIALIZE 3D GLOBE INSTANCE (Globe.gl)
+    // =========================================================================
+    const world = Globe()(container)
+      .globeImageUrl(TEXTURES.day)
+      .bumpImageUrl(TEXTURES.topology)
+      .backgroundImageUrl(TEXTURES.space)
+      .atmosphereColor('#38bdf8')
+      .atmosphereAltitude(0.24)
+      // Country Polygons Configuration (Transparent glass fill to reveal photorealistic satellite Earth!)
+      .polygonCapColor(feat => {
+        if (state.selectedCountry === feat) return 'rgba(245, 158, 11, 0.45)'; // Amber highlight
+        if (state.hoveredCountry === feat) return 'rgba(56, 189, 248, 0.35)'; // Cyan highlight
+        return 'rgba(255, 255, 255, 0.01)'; // Transparent: shows authentic Blue Marble satellite earth!
+      })
+      .polygonSideColor(() => 'rgba(56, 189, 248, 0.15)')
+      .polygonStrokeColor(() => 'rgba(56, 189, 248, 0.65)') // Crisp illuminated national boundaries
+      .polygonAltitude(feat => {
+        if (state.selectedCountry === feat) return 0.05;
+        if (state.hoveredCountry === feat) return 0.03;
+        return 0.012;
+      })
+      .onPolygonHover(handlePolygonHover)
+      .onPolygonClick(handlePolygonClick)
+      // 3D HTML Weather Badges
+      .htmlElementsData(WEATHER_STATIONS)
+      .htmlLat(d => d.lat)
+      .htmlLng(d => d.lng)
+      .htmlAltitude(0.04)
+      .htmlElement(createWeatherBadgeElement);
+
+    // Initial Camera pointing at Vietnam & Southeast Asia
+    world.pointOfView({ lat: 16.0, lng: 108.0, altitude: 2.2 }, 1500);
+
+    const controls = world.controls();
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.8;
+    controls.enableDamping = true;
+
+    // Track Camera Coordinates
+    function updateTelemetry() {
+      const pov = world.pointOfView();
+      if (pov) {
+        teleLat.textContent = `${pov.lat >= 0 ? pov.lat.toFixed(1) + '° N' : Math.abs(pov.lat).toFixed(1) + '° S'}`;
+        teleLng.textContent = `${pov.lng >= 0 ? pov.lng.toFixed(1) + '° E' : Math.abs(pov.lng).toFixed(1) + '° W'}`;
+        teleAlt.textContent = `${pov.altitude.toFixed(2)}x R`;
+      }
+      requestAnimationFrame(updateTelemetry);
+    }
+    requestAnimationFrame(updateTelemetry);
+
+    // =========================================================================
+    // 7. WEATHER BADGE DOM CREATOR & RADAR RINGS
+    // =========================================================================
+    function createWeatherBadgeElement(d) {
+      const el = document.createElement('div');
+      el.className = `weather-badge ${d.type}`;
+      el.innerHTML = `
+        <span class="wb-icon">${d.icon}</span>
+        <span class="wb-temp">${d.temp}°</span>
+        <span class="wb-city">${d.name}</span>
+      `;
+      el.onclick = (e) => {
+        e.stopPropagation();
+        sound.playClickSound();
+        world.pointOfView({ lat: d.lat, lng: d.lng, altitude: 1.5 }, 1800);
+        showStationWeatherInfo(d);
+      };
+      return el;
+    }
+
+    function renderWeatherBadges() {
+      if (!state.showWeatherBadges) {
+        world.htmlElementsData([]);
+        return;
+      }
+      const filtered = WEATHER_STATIONS.filter(st => {
+        if (state.weatherFilter === 'all') return true;
+        return st.type === state.weatherFilter;
+      });
+      world.htmlElementsData(filtered);
+    }
+
+    function updateRadarRings() {
+      if (!state.showRadarRings) {
+        world.ringsData([]);
+        return;
+      }
+      // Pulsing radar rings for Rain, Storm and Sun
+      const rainStormStations = WEATHER_STATIONS.filter(st => st.type === 'rain' || st.type === 'storm');
+      const rings = rainStormStations.map(st => ({
+        lat: st.lat,
+        lng: st.lng,
+        color: st.type === 'storm' ? '#c084fc' : '#38bdf8',
+        maxR: st.type === 'storm' ? 8 : 5.5,
+        propagationSpeed: st.type === 'storm' ? 4 : 2.5,
+        repeatPeriod: st.type === 'storm' ? 800 : 1200
+      }));
+
+      world.ringsData(rings)
+        .ringColor('color')
+        .ringMaxRadius('maxR')
+        .ringPropagationSpeed('propagationSpeed')
+        .ringRepeatPeriod('repeatPeriod');
+    }
+
+    function updateCounts() {
+      document.getElementById('count-all').textContent = WEATHER_STATIONS.length;
+      document.getElementById('count-sun').textContent = WEATHER_STATIONS.filter(s => s.type === 'sun').length;
+      document.getElementById('count-rain').textContent = WEATHER_STATIONS.filter(s => s.type === 'rain').length;
+      document.getElementById('count-storm').textContent = WEATHER_STATIONS.filter(s => s.type === 'storm').length;
+      document.getElementById('count-snow').textContent = WEATHER_STATIONS.filter(s => s.type === 'snow').length;
+    }
+
+    // =========================================================================
+    // 8. INTERACTION & DETAIL PANEL
+    // =========================================================================
+    function handlePolygonHover(feat) {
+      state.hoveredCountry = feat;
+      world.polygonCapColor(world.polygonCapColor());
+
+      if (feat && feat.properties) {
+        const props = feat.properties;
+        const iso = props.ISO_A3 || props.ADM0_A3 || '';
+        const extra = COUNTRY_EXTRAS[iso] || {};
+        const flag = extra.flag || getFlagEmoji(props.ISO_A2);
+        const name = extra.viName || props.NAME || props.ADMIN;
+        const pop = props.POP_EST ? props.POP_EST.toLocaleString('vi-VN') : 'Đang cập nhật';
+
+        // Find weather station in this country if any
+        const matchWeather = WEATHER_STATIONS.find(st => st.iso === iso || st.country === name);
+        const weatherInfo = matchWeather ? ` | Thời tiết: ${matchWeather.icon} ${matchWeather.temp}°C (${matchWeather.status})` : '';
+
+        ttName.innerHTML = `${flag} ${name}`;
+        ttSub.innerHTML = `Dân số: ${pop} người${weatherInfo}`;
+        tooltip.style.display = 'block';
+      } else {
+        tooltip.style.display = 'none';
+      }
+    }
+
+    window.addEventListener('mousemove', (e) => {
+      if (tooltip.style.display === 'block') {
+        tooltip.style.left = e.clientX + 'px';
+        tooltip.style.top = e.clientY + 'px';
+      }
+    });
+
+    function handlePolygonClick(feat) {
+      if (!feat || !feat.properties) return;
+      state.selectedCountry = feat;
+      world.polygonCapColor(world.polygonCapColor());
+      world.polygonAltitude(world.polygonAltitude());
+      sound.playClickSound();
+
+      displayCountryInfo(feat);
+    }
+
+    function showStationWeatherInfo(st) {
+      // Find matching country
+      if (state.countriesData) {
+        const countryFeat = state.countriesData.features.find(f => f.properties.ISO_A3 === st.iso || f.properties.NAME === st.country);
+        if (countryFeat) {
+          state.selectedCountry = countryFeat;
+          world.polygonCapColor(world.polygonCapColor());
+          displayCountryInfo(countryFeat, st);
+          return;
+        }
+      }
+      // Fallback display
+      panelName.textContent = st.name;
+      panelFormal.textContent = `${st.name} - ${st.country}`;
+      panelCapital.textContent = st.name;
+      panelContinent.textContent = 'Trạm Khí Tượng';
+      panelPop.textContent = 'Dữ liệu trực tiếp';
+      panelGdp.textContent = 'Đang đồng bộ';
+      panelIso.textContent = st.iso || st.id;
+      pwIcon.textContent = st.icon;
+      pwTemp.textContent = `${st.temp}°C`;
+      pwStatus.textContent = st.status;
+      pwHumidity.textContent = `${st.humidity}%`;
+      pwWind.textContent = `${st.wind} km/h`;
+      countryPanel.style.display = 'flex';
+    }
+
+    function displayCountryInfo(feat, forcedWeather = null) {
+      const props = feat.properties;
+      const iso = props.ISO_A3 || props.ADM0_A3 || '';
+      const iso2 = props.ISO_A2 || '';
+      const extra = COUNTRY_EXTRAS[iso] || {};
+
+      const name = extra.viName || props.NAME || props.ADMIN;
+      const formal = extra.formal || props.FORMAL_EN || props.NAME;
+
+      panelName.textContent = name;
+      panelFormal.textContent = formal;
+
+      if (iso2 && iso2 !== '-99' && iso2.length === 2) {
+        panelFlag.src = `https://flagcdn.com/w80/${iso2.toLowerCase()}.png`;
+        panelFlag.style.display = 'block';
+      } else {
+        panelFlag.style.display = 'none';
+      }
+
+      panelCapital.textContent = extra.capital || 'Chưa cập nhật';
+      panelPop.textContent = props.POP_EST ? `${props.POP_EST.toLocaleString('vi-VN')} người` : 'Không xác định';
+      panelContinent.textContent = props.CONTINENT || 'Châu lục';
+      panelGdp.textContent = props.GDP_MD_EST ? `$${props.GDP_MD_EST.toLocaleString('vi-VN')} Triệu USD` : 'Đang thống kê';
+      panelIso.textContent = `${iso2} / ${iso}`;
+
+      // Weather data matching or estimation
+      const wStation = forcedWeather || WEATHER_STATIONS.find(s => s.iso === iso || s.country === name) || {
+        temp: Math.round(20 + Math.random() * 12),
+        type: 'sun',
+        status: 'Nắng ấm trong lành',
+        icon: '☀️',
+        humidity: 68,
+        wind: 15
+      };
+
+      pwIcon.textContent = wStation.icon;
+      pwTemp.textContent = `${wStation.temp}°C`;
+      pwStatus.textContent = wStation.status;
+      pwHumidity.textContent = `${wStation.humidity}%`;
+      pwWind.textContent = `${wStation.wind} km/h`;
+      pwZone.textContent = props.CONTINENT || 'Toàn cầu';
+
+      countryPanel.style.display = 'flex';
+      panelFlyBtn.onclick = () => flyToCountry(feat);
+    }
+
+    function flyToCountry(feat) {
+      sound.playFlyToSound();
+      const props = feat.properties || {};
+      const iso = props.ISO_A3 || props.ADM0_A3 || '';
+      const extra = COUNTRY_EXTRAS[iso];
+
+      let targetLat = 16.0, targetLng = 108.0;
+      if (extra && extra.lat !== undefined) {
+        targetLat = extra.lat;
+        targetLng = extra.lng;
+      } else if (feat.geometry) {
+        try {
+          const coords = feat.geometry.coordinates.flat(feat.geometry.type === 'MultiPolygon' ? 3 : 2);
+          let sumLat = 0, sumLng = 0, count = 0;
+          for (let i = 0; i < coords.length; i += 2) {
+            sumLng += coords[i]; sumLat += coords[i + 1]; count++;
+          }
+          if (count > 0) { targetLng = sumLng / count; targetLat = sumLat / count; }
+        } catch (e) {}
+      }
+      world.pointOfView({ lat: targetLat, lng: targetLng, altitude: 1.4 }, 2000);
+    }
+
+    // =========================================================================
+    // 9. SEARCH & AUTOCOMPLETE
+    // =========================================================================
+    function buildAutocomplete(q) {
+      if (!state.countriesData || !q.trim()) {
+        autocompleteList.style.display = 'none'; return;
+      }
+      const query = q.trim().toLowerCase();
+      const matches = state.countriesData.features.filter(f => {
+        const p = f.properties;
+        const extra = COUNTRY_EXTRAS[p.ISO_A3 || ''];
+        return (p.NAME || '').toLowerCase().includes(query) || 
+               (extra && extra.viName.toLowerCase().includes(query));
+      }).slice(0, 6);
+
+      if (matches.length === 0) { autocompleteList.style.display = 'none'; return; }
+      autocompleteList.innerHTML = '';
+      matches.forEach(f => {
+        const p = f.properties;
+        const extra = COUNTRY_EXTRAS[p.ISO_A3 || ''];
+        const flag = extra ? extra.flag : getFlagEmoji(p.ISO_A2);
+        const name = extra ? extra.viName : p.NAME;
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.innerHTML = `<span>${flag}</span><span>${name}</span><span style="color:#64748b; font-size:11px; margin-left:auto;">(${p.NAME})</span>`;
+        item.onclick = () => {
+          searchInput.value = name;
+          autocompleteList.style.display = 'none';
+          state.selectedCountry = f;
+          world.polygonCapColor(world.polygonCapColor());
+          displayCountryInfo(f);
+          flyToCountry(f);
+        };
+        autocompleteList.appendChild(item);
+      });
+      autocompleteList.style.display = 'block';
+    }
+
+    searchInput.addEventListener('input', (e) => buildAutocomplete(e.target.value));
+    searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') triggerSearch(); });
+    btnSearch.addEventListener('click', triggerSearch);
+
+    function triggerSearch() {
+      const q = searchInput.value.trim().toLowerCase();
+      if (!q || !state.countriesData) return;
+      autocompleteList.style.display = 'none';
+      const found = state.countriesData.features.find(f => {
+        const p = f.properties;
+        const extra = COUNTRY_EXTRAS[p.ISO_A3 || ''];
+        return (p.NAME || '').toLowerCase().includes(q) || 
+               (extra && extra.viName.toLowerCase().includes(q));
+      });
+      if (found) {
+        state.selectedCountry = found;
+        world.polygonCapColor(world.polygonCapColor());
+        displayCountryInfo(found);
+        flyToCountry(found);
+      } else {
+        alert(`Không tìm thấy quốc gia: "${searchInput.value}"`);
+      }
+    }
+
+    panelClose.addEventListener('click', () => {
+      countryPanel.style.display = 'none';
+      state.selectedCountry = null;
+      world.polygonCapColor(world.polygonCapColor());
+    });
+
+    // =========================================================================
+    // 10. TOOLBAR & HUD EVENT HANDLERS
+    // =========================================================================
+    // Weather Filter Pills
+    document.querySelectorAll('.weather-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.weather-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.weatherFilter = pill.getAttribute('data-filter');
+        sound.playClickSound();
+        renderWeatherBadges();
+      });
+    });
+
+    // Day / Night Toggle
+    const btnDayNight = document.getElementById('btn-daynight');
+    btnDayNight.addEventListener('click', () => {
+      state.isNightMode = !state.isNightMode;
+      sound.playClickSound();
+      if (state.isNightMode) {
+        world.globeImageUrl(TEXTURES.night).atmosphereColor('#00f0ff');
+        document.getElementById('daynight-icon').textContent = '🌙';
+        document.getElementById('daynight-text').textContent = 'Đêm & Đèn Phố';
+        btnDayNight.classList.add('active');
+      } else {
+        world.globeImageUrl(TEXTURES.day).atmosphereColor('#38bdf8');
+        document.getElementById('daynight-icon').textContent = '☀️';
+        document.getElementById('daynight-text').textContent = 'Ban Ngày (Vệ Tinh)';
+        btnDayNight.classList.remove('active');
+      }
+    });
+
+    // Rotate Toggle
+    const btnRotate = document.getElementById('btn-rotate');
+    btnRotate.addEventListener('click', () => {
+      state.autoRotate = !state.autoRotate;
+      sound.playClickSound();
+      controls.autoRotate = state.autoRotate;
+      btnRotate.classList.toggle('active', state.autoRotate);
+      document.getElementById('rotate-icon').textContent = state.autoRotate ? '🔄' : '⏸️';
+      teleRot.textContent = state.autoRotate ? '0.8 deg/s' : '0.0 deg/s';
+    });
+
+    // Audio Toggle
+    const btnAudio = document.getElementById('btn-audio');
+    btnAudio.addEventListener('click', () => {
+      const active = sound.toggleMute();
+      document.getElementById('audio-icon').textContent = active ? '🔊' : '🔇';
+      document.getElementById('audio-text').textContent = active ? 'Âm Thanh' : 'Tắt Tiếng';
+      btnAudio.classList.toggle('active', !active);
+      if (active) sound.playClickSound();
+    });
+
+    // Layer Switch Toggles
+    document.getElementById('toggle-weather-badges').addEventListener('change', (e) => {
+      state.showWeatherBadges = e.target.checked;
+      renderWeatherBadges();
+      sound.playClickSound();
+    });
+
+    document.getElementById('toggle-radar-rings').addEventListener('change', (e) => {
+      state.showRadarRings = e.target.checked;
+      updateRadarRings();
+      sound.playClickSound();
+    });
+
+    document.getElementById('toggle-atmosphere').addEventListener('change', (e) => {
+      world.showAtmosphere(e.target.checked);
+      sound.playClickSound();
+    });
+
+    document.getElementById('toggle-country-labels').addEventListener('change', (e) => {
+      state.showCountryLabels = e.target.checked;
+      world.labelsData(state.showCountryLabels ? state.countryLabelsList : []);
+      sound.playClickSound();
+    });
+
+    window.addEventListener('resize', () => {
+      world.width(window.innerWidth).height(window.innerHeight);
+    });
+
+    // =========================================================================
+    // 11. FETCH GEOJSON & INITIALIZE LABELS & WEATHER
+    // =========================================================================
+    const GEOJSON_URL = 'https://cdn.jsdelivr.net/gh/vasturiano/three-globe/example/country-polygons/ne_110m_admin_0_countries.geojson';
+    const GEOJSON_FALLBACK = 'https://raw.githubusercontent.com/vasturiano/three-globe/master/example/country-polygons/ne_110m_admin_0_countries.geojson';
+
+    async function loadData() {
+      try {
+        let res;
+        try { res = await fetch(GEOJSON_URL); if (!res.ok) throw new Error(); }
+        catch (e) { res = await fetch(GEOJSON_FALLBACK); }
+        const data = await res.json();
+        state.countriesData = data;
+
+        // Apply Polygons to Globe
+        world.polygonsData(data.features);
+
+        // Generate country labels for ALL countries
+        const labels = [];
+        data.features.forEach(f => {
+          const p = f.properties;
+          const iso = p.ISO_A3 || '';
+          const extra = COUNTRY_EXTRAS[iso];
+          const name = extra ? extra.viName : p.NAME;
+
+          if (extra && extra.lat !== undefined) {
+            labels.push({ lat: extra.lat, lng: extra.lng, name: name });
+          } else if (f.geometry) {
+            try {
+              const coords = f.geometry.coordinates.flat(f.geometry.type === 'MultiPolygon' ? 3 : 2);
+              let sumLat = 0, sumLng = 0, count = 0;
+              for (let i = 0; i < coords.length; i += 2) {
+                sumLng += coords[i]; sumLat += coords[i + 1]; count++;
+              }
+              if (count > 0) labels.push({ lat: sumLat / count, lng: sumLng / count, name: name });
+            } catch (e) {}
+          }
+        });
+
+        state.countryLabelsList = labels;
+        world.labelsData(labels)
+          .labelLat(d => d.lat)
+          .labelLng(d => d.lng)
+          .labelText(d => d.name)
+          .labelSize(0.9)
+          .labelDotRadius(0.3)
+          .labelColor(() => 'rgba(255, 255, 255, 0.85)')
+          .labelResolution(2);
+
+        // Render Radar Waves & Counts
+        updateCounts();
+        updateRadarRings();
+
+        // Fade out Loading Screen
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => loadingOverlay.style.display = 'none', 500);
+
+        // Auto select Vietnam with weather
+        const vn = data.features.find(f => f.properties.ISO_A3 === 'VNM' || f.properties.NAME === 'Vietnam');
+        if (vn) {
+          setTimeout(() => {
+            state.selectedCountry = vn;
+            world.polygonCapColor(world.polygonCapColor());
+            displayCountryInfo(vn);
+          }, 1000);
+        }
+
+        // Asynchronously sync real-time weather from Open-Meteo
+        syncRealWeather();
+
+      } catch (err) {
+        document.getElementById('loading-msg').innerHTML = '<span style="color:#ef4444;">Lỗi tải dữ liệu địa lý toàn cầu!</span>';
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
