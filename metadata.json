@@ -1,0 +1,6 @@
+{
+  "name": "Sông Mê Công",
+  "description": "Chuyên đề Địa lí 11: Sông Mê Công và Đồng bằng sông Cửu Long. Dự án học tập tương tác của Trường TH, THCS, THPT FPT Hậu Giang (61C ấp 6, xã Vị Thủy, TP.Cần Thơ).",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
